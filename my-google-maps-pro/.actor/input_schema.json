@@ -131,11 +131,11 @@
 		"maxConcurrency": {
 			"title": "Maximum Concurrency",
 			"type": "integer",
-			"description": "Maximum number of pages to process simultaneously. Higher values = faster scraping but higher resource usage. Recommended: 3-5 for browser-based scraping.",
-			"default": 5,
+			"description": "Maximum number of pages to process simultaneously. Higher values = faster scraping but higher resource usage. Recommended: 1-2 for 1GB RAM, 3-5 for 4GB+ RAM.",
+			"default": 2,
 			"minimum": 1,
 			"maximum": 10,
-			"prefill": 5
+			"prefill": 2
 		},
 		"navigationTimeoutSecs": {
 			"title": "Navigation Timeout (seconds)",

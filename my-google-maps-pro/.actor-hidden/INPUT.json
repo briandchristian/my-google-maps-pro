@@ -21,7 +21,7 @@
 	"captchaConfiguration": {
 		"maxRetries": 3
 	},
-	"maxConcurrency": 5,
+	"maxConcurrency": 2,
 	"navigationTimeoutSecs": 120,
 	"requestHandlerTimeoutSecs": 300
 }

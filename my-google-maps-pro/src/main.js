@@ -19,7 +19,32 @@ import { extractContactInfo } from './utils/contact-extractor.js';
 
 await Actor.init();
 
-const input = await Actor.getInput();
+let input = await Actor.getInput();
+
+// Provide demo defaults if no input provided (useful for console testing)
+if (!input || !input.searches || input.searches.length === 0) {
+	console.log('No input provided. Using demo configuration...');
+	input = {
+		searches: [
+			{
+				query: 'coffee shops',
+				location: 'San Francisco, CA',
+			},
+		],
+		maxPlaces: 5, // Keep it small for quick demo
+		includeReviews: false, // Disable to save time
+		maxReviews: 0,
+		downloadPhotos: false,
+		extractContactInfo: false,
+		proxyConfiguration: {
+			useApifyProxy: false, // Free tier compatible
+		},
+		maxConcurrency: 1, // Safe for 1GB memory
+		navigationTimeoutSecs: 120,
+		requestHandlerTimeoutSecs: 300,
+	};
+	console.log('Demo: Searching for coffee shops in San Francisco (5 places)');
+}
 
 // Create proxy configuration
 const proxyConfiguration = await createProxyConfiguration(
@@ -27,10 +52,22 @@ const proxyConfiguration = await createProxyConfiguration(
 );
 
 const crawler = new PlaywrightCrawler({
-	maxConcurrency: input.maxConcurrency || 5,
+	// Limit concurrency for memory constraints (1GB = max 2 browsers)
+	maxConcurrency: Math.min(input.maxConcurrency || 2, 2),
 	requestHandlerTimeoutSecs: input.requestHandlerTimeoutSecs || 300,
 	navigationTimeoutSecs: input.navigationTimeoutSecs || 120,
 	proxyConfiguration,
+	launchContext: {
+		// Optimize Chrome for low memory environments
+		launchOptions: {
+			args: [
+				'--disable-dev-shm-usage', // Overcome limited resource problems
+				'--disable-gpu', // Disable GPU hardware acceleration
+				'--no-sandbox', // Required for Docker
+				'--disable-setuid-sandbox',
+			],
+		},
+	},
 	preNavigationHooks: [
 		async ({ page }) => {
 			// Randomize viewport to avoid detection
