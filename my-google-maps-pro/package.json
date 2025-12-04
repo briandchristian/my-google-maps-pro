@@ -1,6 +1,6 @@
 {
 	"name": "my-google-maps-pro",
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"type": "module",
 	"description": "This is an example of an Apify Actor.",
 	"dependencies": {
