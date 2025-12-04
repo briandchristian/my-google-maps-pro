@@ -116,18 +116,47 @@ const crawler = new PlaywrightCrawler({
 
 			// Scroll results panel until enough places
 			let places = [];
-			while (places.length < (input?.maxPlaces || 100)) {
+			let scrollAttempts = 0;
+			const maxScrollAttempts = 20;
+			
+			while (places.length < (input?.maxPlaces || 100) && scrollAttempts < maxScrollAttempts) {
 				const newPlaces = await page.$$eval(
-					'a[href^="https://www.google.com/maps/place"]',
+					'a[href*="maps/place"]',
 					(els) =>
-						els.map((el) => ({
-							title: el.querySelector('span')?.innerText,
-							url: el.getAttribute('href'),
-						}))
+						els.map((el) => {
+							// Try multiple selectors for title
+							const title = 
+								el.querySelector('div.fontHeadlineSmall')?.innerText ||
+								el.querySelector('div.qBF1Pd')?.innerText ||
+								el.querySelector('span.OSrXXb')?.innerText ||
+								el.querySelector('div[role="heading"]')?.innerText ||
+								el.textContent?.trim()?.split('\n')[0] ||
+								'Unknown Place';
+							
+							return {
+								title: title.trim(),
+								url: el.getAttribute('href'),
+							};
+						}).filter(place => place.url && place.url.includes('/maps/place/'))
 				);
-				places = [...new Set([...places, ...newPlaces])];
-				await page.evaluate(() => window.scrollBy(0, 2000));
-				await page.waitForTimeout(2000);
+				
+				// Merge new places with existing, avoiding duplicates by URL
+				const existingUrls = new Set(places.map(p => p.url));
+				const uniqueNewPlaces = newPlaces.filter(p => !existingUrls.has(p.url));
+				places = [...places, ...uniqueNewPlaces];
+				
+				console.log(`Found ${places.length} places so far...`);
+				
+				// Scroll the results panel
+				await page.evaluate(() => {
+					const resultsPanel = document.querySelector('div[role="feed"]') || 
+										document.querySelector('div[aria-label*="Results"]');
+					if (resultsPanel) {
+						resultsPanel.scrollBy(0, 1000);
+					}
+				});
+				await page.waitForTimeout(1500);
+				scrollAttempts++;
 			}
 
 			// Enqueue detail pages
@@ -141,25 +170,110 @@ const crawler = new PlaywrightCrawler({
 			}
 		} else if (request.userData.label === 'DETAIL') {
 			// Handle detail page
-	// Check for CAPTCHA
-	if (await detectCaptcha(page)) {
-		if (input.captchaConfiguration?.antiCaptchaApiKey) {
-			await solveCaptcha(page, input.captchaConfiguration);
-		}
-	}
+			console.log(`Scraping: ${request.userData.placeTitle || request.url}`);
+			
+			// Check for CAPTCHA
+			if (await detectCaptcha(page)) {
+				if (input.captchaConfiguration?.antiCaptchaApiKey) {
+					await solveCaptcha(page, input.captchaConfiguration);
+				}
+			}
 
-	// Extract basic place data
+			// Wait for place info to load - try to wait for specific elements
+			try {
+				await page.waitForSelector('h1', { timeout: 10000 });
+			} catch (e) {
+				console.log('Warning: Title element not found immediately, continuing...');
+			}
+			await page.waitForTimeout(2000);
+
+	// Extract basic place data using updated selectors
 	const basicData = await page.evaluate(() => {
 		const gpsMatch = window.location.href.match(/!8m2!3d([-\d.]+)!4d([-\d.]+)/);
+		
+		// Helper function to get text content safely
+		const getText = (selectors) => {
+			for (const selector of selectors) {
+				const element = document.querySelector(selector);
+				if (element?.textContent?.trim()) {
+					return element.textContent.trim();
+				}
+			}
+			return null;
+		};
+
+		// Helper to get attribute safely
+		const getAttr = (selectors, attr) => {
+			for (const selector of selectors) {
+				const element = document.querySelector(selector);
+				const value = element?.getAttribute(attr);
+				if (value) return value;
+			}
+			return null;
+		};
+
+		// Extract title - try multiple selectors
+		const title = getText([
+			'h1.DUwDvf.lfPIob', // Current main selector
+			'h1[class*="fontHeadlineLarge"]',
+			'h1',
+			'div[role="main"] h1',
+			'[data-section-id="oh"] h2' // Fallback
+		]);
+
+		// Extract address - try multiple approaches
+		const address = getText([
+			'button[data-item-id="address"] div.fontBodyMedium',
+			'button[data-item-id="address"] div',
+			'[data-tooltip="Copy address"]',
+			'button[aria-label*="Address"] div',
+			'div.rogA2c div.Io6YTe' // Old selector as fallback
+		]);
+
+		// Extract phone - try multiple approaches
+		const phone = getText([
+			'button[data-item-id*="phone"] div.fontBodyMedium',
+			'button[data-item-id*="phone"] div',
+			'button[aria-label*="Phone"] div',
+			'a[href^="tel:"]',
+			'button[data-tooltip="Copy phone number"]'
+		]);
+
+		// Extract website
+		const website = getAttr([
+			'a[data-item-id="authority"]',
+			'a[aria-label*="Website"]',
+			'a[data-tooltip*="website"]',
+			'button[data-item-id*="authority"] + a'
+		], 'href');
+
+		// Extract rating - try multiple approaches
+		let rating = null;
+		const ratingElement = document.querySelector('div.F7nice span[role="img"]') || 
+							  document.querySelector('span[role="img"][aria-label*="star"]') ||
+							  document.querySelector('div.fontDisplayLarge');
+		
+		if (ratingElement) {
+			const ariaLabel = ratingElement.getAttribute('aria-label');
+			const textContent = ratingElement.textContent;
+			const match = (ariaLabel || textContent || '').match(/(\d+\.?\d*)/);
+			rating = match ? match[1] : null;
+		}
+
+		// Get review count
+		const reviewCount = getText([
+			'div.F7nice span[aria-label*="reviews"]',
+			'button[aria-label*="reviews"] span',
+			'span[aria-label*="reviews"]'
+		]);
+
 		return {
-			title: document.querySelector('h1')?.innerText,
-			address: document.querySelector('[data-item-id="address"]')?.innerText,
-			phone: document.querySelector('[data-item-id="phone"]')?.innerText,
-			website: document.querySelector('a[data-item-id="authority"]')?.href,
-			rating: document
-				.querySelector('[role="img"][aria-label*="star"]')
-				?.getAttribute('aria-label')
-				?.match(/(\d+\.?\d*)/)?.[1],
+			title,
+			address,
+			phone,
+			website,
+			rating,
+			reviewCount,
 			gps: gpsMatch
 				? { lat: parseFloat(gpsMatch[1]), lng: parseFloat(gpsMatch[2]) }
 				: null,
@@ -171,6 +285,9 @@ const crawler = new PlaywrightCrawler({
 		url: request.loadedUrl,
 		scrapedAt: new Date().toISOString(),
 	};
+
+	// Log what we extracted
+	console.log(`✅ Extracted: ${basicData.title || 'Unknown'} - ${basicData.address || 'No address'} - Rating: ${basicData.rating || 'N/A'}`);
 
 	// Extract reviews if enabled
 	if (input.includeReviews) {
