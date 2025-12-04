@@ -1,0 +1,17 @@
+{
+	"actorSpecification": 1,
+	"name": "my-google-maps-pro",
+	"title": "Google Maps Pro Scraper",
+	"description": "Advanced Google Maps scraper with proxy rotation, CAPTCHA solving, review extraction, photo downloads, and contact information extraction.",
+	"version": "1.0",
+	"meta": {
+		"templateId": "js-crawlee-playwright-chrome",
+		"generatedBy": "claude-sonnet-4"
+	},
+	"input": "./input_schema.json",
+	"output": "./output_schema.json",
+	"storages": {
+		"dataset": "./dataset_schema.json"
+	},
+	"dockerfile": "../Dockerfile"
+}

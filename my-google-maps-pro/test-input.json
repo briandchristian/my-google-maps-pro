@@ -1,0 +1,21 @@
+{
+	"searches": [
+		{
+			"query": "coffee shops",
+			"location": "San Francisco, CA"
+		}
+	],
+	"maxPlaces": 3,
+	"includeReviews": false,
+	"maxReviews": 0,
+	"downloadPhotos": false,
+	"extractContactInfo": false,
+	"proxyConfiguration": {
+		"useApifyProxy": false
+	},
+	"maxConcurrency": 3,
+	"navigationTimeoutSecs": 120,
+	"requestHandlerTimeoutSecs": 300
+}
+
+

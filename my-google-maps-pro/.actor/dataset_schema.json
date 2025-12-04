@@ -1,0 +1,383 @@
+{
+	"actorSpecification": 1,
+	"fields": {
+		"type": "object",
+		"properties": {
+			"title": {
+				"type": "string",
+				"description": "Name of the place"
+			},
+			"address": {
+				"type": "string",
+				"description": "Full address of the place"
+			},
+			"phone": {
+				"type": "string",
+				"description": "Phone number"
+			},
+			"website": {
+				"type": "string",
+				"format": "uri",
+				"description": "Website URL"
+			},
+			"rating": {
+				"type": ["string", "number", "null"],
+				"description": "Average rating"
+			},
+			"gps": {
+				"type": "object",
+				"properties": {
+					"lat": {
+						"type": "number",
+						"description": "Latitude"
+					},
+					"lng": {
+						"type": "number",
+						"description": "Longitude"
+					}
+				},
+				"description": "GPS coordinates"
+			},
+			"url": {
+				"type": "string",
+				"format": "uri",
+				"description": "Google Maps URL"
+			},
+			"scrapedAt": {
+				"type": "string",
+				"format": "date-time",
+				"description": "Timestamp when the place was scraped"
+			},
+			"reviews": {
+				"type": "array",
+				"items": {
+					"type": "object",
+					"properties": {
+						"author": {
+							"type": "string"
+						},
+						"rating": {
+							"type": ["number", "null"]
+						},
+						"text": {
+							"type": ["string", "null"]
+						},
+						"date": {
+							"type": ["string", "null"]
+						},
+						"response": {
+							"type": ["object", "null"],
+							"properties": {
+								"owner": {
+									"type": "string"
+								},
+								"text": {
+									"type": "string"
+								},
+								"date": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"description": "Reviews for the place"
+			},
+			"photos": {
+				"type": "array",
+				"items": {
+					"type": "object",
+					"properties": {
+						"key": {
+							"type": "string"
+						},
+						"url": {
+							"type": "string",
+							"format": "uri"
+						},
+						"thumbnail": {
+							"type": "string",
+							"format": "uri"
+						},
+						"alt": {
+							"type": "string"
+						}
+					}
+				},
+				"description": "Photos of the place"
+			},
+			"contactInfo": {
+				"type": ["object", "null"],
+				"properties": {
+					"emails": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"format": "email"
+						}
+					},
+					"socialMedia": {
+						"type": "object",
+						"properties": {
+							"facebook": {
+								"type": "string",
+								"format": "uri"
+							},
+							"instagram": {
+								"type": "string",
+								"format": "uri"
+							},
+							"twitter": {
+								"type": "string",
+								"format": "uri"
+							},
+							"linkedin": {
+								"type": "string",
+								"format": "uri"
+							}
+						}
+					},
+					"phoneNumbers": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				},
+				"description": "Contact information extracted from website"
+			}
+		}
+	},
+	"views": {
+		"overview": {
+			"title": "Overview",
+			"description": "Basic information about places",
+			"transformation": {
+				"fields": [
+					"title",
+					"address",
+					"phone",
+					"rating",
+					"website",
+					"url"
+				]
+			},
+			"display": {
+				"component": "table",
+				"properties": {
+					"title": {
+						"label": "Place Name",
+						"format": "text"
+					},
+					"address": {
+						"label": "Address",
+						"format": "text"
+					},
+					"phone": {
+						"label": "Phone",
+						"format": "text"
+					},
+					"rating": {
+						"label": "Rating",
+						"format": "number"
+					},
+					"website": {
+						"label": "Website",
+						"format": "link"
+					},
+					"url": {
+						"label": "Google Maps",
+						"format": "link"
+					}
+				}
+			}
+		},
+		"detailed": {
+			"title": "Detailed View",
+			"description": "Complete information including GPS coordinates and scrape timestamp",
+			"transformation": {
+				"fields": [
+					"title",
+					"address",
+					"phone",
+					"website",
+					"rating",
+					"gps",
+					"url",
+					"scrapedAt"
+				]
+			},
+			"display": {
+				"component": "table",
+				"properties": {
+					"title": {
+						"label": "Place Name",
+						"format": "text"
+					},
+					"address": {
+						"label": "Address",
+						"format": "text"
+					},
+					"phone": {
+						"label": "Phone",
+						"format": "text"
+					},
+					"website": {
+						"label": "Website",
+						"format": "link"
+					},
+					"rating": {
+						"label": "Rating",
+						"format": "number"
+					},
+					"gps": {
+						"label": "GPS Coordinates",
+						"format": "object"
+					},
+					"url": {
+						"label": "Google Maps URL",
+						"format": "link"
+					},
+					"scrapedAt": {
+						"label": "Scraped At",
+						"format": "date"
+					}
+				}
+			}
+		},
+		"with-reviews": {
+			"title": "With Reviews",
+			"description": "Places with their reviews",
+			"transformation": {
+				"fields": [
+					"title",
+					"rating",
+					"address",
+					"reviews"
+				]
+			},
+			"display": {
+				"component": "table",
+				"properties": {
+					"title": {
+						"label": "Place Name",
+						"format": "text"
+					},
+					"rating": {
+						"label": "Rating",
+						"format": "number"
+					},
+					"address": {
+						"label": "Address",
+						"format": "text"
+					},
+					"reviews": {
+						"label": "Reviews",
+						"format": "array"
+					}
+				}
+			}
+		},
+		"contact-info": {
+			"title": "Contact Information",
+			"description": "Places with extracted contact information",
+			"transformation": {
+				"fields": [
+					"title",
+					"phone",
+					"website",
+					"contactInfo"
+				]
+			},
+			"display": {
+				"component": "table",
+				"properties": {
+					"title": {
+						"label": "Place Name",
+						"format": "text"
+					},
+					"phone": {
+						"label": "Phone (Google Maps)",
+						"format": "text"
+					},
+					"website": {
+						"label": "Website",
+						"format": "link"
+					},
+					"contactInfo": {
+						"label": "Extracted Contact Info",
+						"format": "object"
+					}
+				}
+			}
+		},
+		"export": {
+			"title": "Export (All Fields)",
+			"description": "All available fields for data export",
+			"transformation": {
+				"fields": [
+					"title",
+					"address",
+					"phone",
+					"website",
+					"rating",
+					"gps",
+					"url",
+					"scrapedAt",
+					"reviews",
+					"photos",
+					"contactInfo"
+				]
+			},
+			"display": {
+				"component": "table",
+				"properties": {
+					"title": {
+						"label": "Place Name",
+						"format": "text"
+					},
+					"address": {
+						"label": "Address",
+						"format": "text"
+					},
+					"phone": {
+						"label": "Phone",
+						"format": "text"
+					},
+					"website": {
+						"label": "Website",
+						"format": "link"
+					},
+					"rating": {
+						"label": "Rating",
+						"format": "number"
+					},
+					"gps": {
+						"label": "GPS",
+						"format": "object"
+					},
+					"url": {
+						"label": "Google Maps URL",
+						"format": "link"
+					},
+					"scrapedAt": {
+						"label": "Scraped At",
+						"format": "date"
+					},
+					"reviews": {
+						"label": "Reviews",
+						"format": "array"
+					},
+					"photos": {
+						"label": "Photos",
+						"format": "array"
+					},
+					"contactInfo": {
+						"label": "Contact Info",
+						"format": "object"
+					}
+				}
+			}
+		}
+	}
+}

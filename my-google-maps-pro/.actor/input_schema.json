@@ -1,0 +1,160 @@
+{
+	"title": "Google Maps Pro Scraper Input",
+	"type": "object",
+	"schemaVersion": 1,
+	"properties": {
+		"searches": {
+			"title": "Search Queries",
+			"type": "array",
+			"description": "List of search queries to scrape from Google Maps. Each query can include a specific location for more targeted results.",
+			"editor": "json",
+			"items": {
+				"type": "object",
+				"properties": {
+					"query": {
+						"title": "Query",
+						"type": "string",
+						"description": "Search query (e.g., 'restaurants', 'coffee shops', 'dentists')"
+					},
+					"location": {
+						"title": "Location",
+						"type": "string",
+						"description": "Location to search in (e.g., 'New York, NY', 'London, UK', 'Tokyo, Japan')"
+					},
+					"zoom": {
+						"title": "Zoom Level",
+						"type": "number",
+						"description": "Zoom level for the map (1-20). Higher values = more zoomed in. Optional.",
+						"minimum": 1,
+						"maximum": 20
+					}
+				},
+				"required": ["query"]
+			},
+			"default": [
+				{
+					"query": "restaurants",
+					"location": "New York, NY"
+				}
+			],
+			"prefill": [
+				{
+					"query": "coffee shops",
+					"location": "San Francisco, CA"
+				},
+				{
+					"query": "hotels",
+					"location": "Miami, FL"
+				}
+			]
+		},
+		"maxPlaces": {
+			"title": "Maximum Places per Search",
+			"type": "integer",
+			"description": "Maximum number of places to scrape for each search query. Lower values = faster scraping, higher values = more comprehensive data.",
+			"default": 100,
+			"minimum": 1,
+			"maximum": 500,
+			"prefill": 50
+		},
+		"includeReviews": {
+			"title": "Include Reviews",
+			"type": "boolean",
+			"description": "Extract reviews for each place. Reviews include author, rating, text, date, and owner responses. Note: This significantly increases scraping time.",
+			"default": true
+		},
+		"maxReviews": {
+			"title": "Maximum Reviews per Place",
+			"type": "integer",
+			"description": "Maximum number of reviews to extract for each place. Set to 0 to skip reviews entirely. Higher values increase scraping time.",
+			"default": 50,
+			"minimum": 0,
+			"maximum": 500,
+			"prefill": 20
+		},
+		"downloadPhotos": {
+			"title": "Download Photos",
+			"type": "boolean",
+			"description": "Download and store place photos in the key-value store. Photos are saved with metadata including URLs and thumbnails. Warning: This consumes significant storage and increases scraping time.",
+			"default": false
+		},
+		"extractContactInfo": {
+			"title": "Extract Contact Information",
+			"type": "boolean",
+			"description": "Extract email addresses and social media links from business websites. The scraper will visit each place's website to find contact information. Warning: This significantly increases scraping time.",
+			"default": false
+		},
+		"proxyConfiguration": {
+			"title": "Proxy Configuration",
+			"type": "object",
+			"description": "Proxy settings for scraping. Proxies are essential for avoiding IP blocks and CAPTCHAs when scraping Google Maps at scale.",
+			"editor": "proxy",
+			"default": {
+				"useApifyProxy": true,
+				"apifyProxyGroups": ["RESIDENTIAL"]
+			},
+			"prefill": {
+				"useApifyProxy": true,
+				"apifyProxyGroups": ["RESIDENTIAL"]
+			}
+		},
+		"captchaConfiguration": {
+			"title": "CAPTCHA Configuration",
+			"type": "object",
+			"description": "CAPTCHA solving settings. Google Maps may show CAPTCHAs during scraping. Provide an Anti-Captcha API key to automatically solve them.",
+			"editor": "json",
+			"properties": {
+				"antiCaptchaApiKey": {
+					"title": "Anti-Captcha API Key",
+					"type": "string",
+					"description": "Anti-Captcha API key for automatic CAPTCHA solving. Get your API key at https://anti-captcha.com. Leave empty to fail on CAPTCHA detection.",
+					"editor": "textfield",
+					"example": "abc123def456ghi789jkl012"
+				},
+				"maxRetries": {
+					"title": "Max Retries",
+					"type": "integer",
+					"description": "Maximum number of retry attempts for CAPTCHA solving before giving up.",
+					"default": 3,
+					"minimum": 1,
+					"maximum": 10,
+					"prefill": 3
+				}
+			},
+			"default": {
+				"maxRetries": 3
+			},
+			"prefill": {
+				"maxRetries": 3
+			}
+		},
+		"maxConcurrency": {
+			"title": "Maximum Concurrency",
+			"type": "integer",
+			"description": "Maximum number of pages to process simultaneously. Higher values = faster scraping but higher resource usage. Recommended: 3-5 for browser-based scraping.",
+			"default": 5,
+			"minimum": 1,
+			"maximum": 10,
+			"prefill": 5
+		},
+		"navigationTimeoutSecs": {
+			"title": "Navigation Timeout (seconds)",
+			"type": "integer",
+			"description": "Maximum time to wait for page navigation before timing out. Increase if you experience frequent timeout errors.",
+			"default": 120,
+			"minimum": 30,
+			"maximum": 300,
+			"prefill": 120
+		},
+		"requestHandlerTimeoutSecs": {
+			"title": "Request Handler Timeout (seconds)",
+			"type": "integer",
+			"description": "Maximum time to process each page before timing out. Increase if extracting many reviews or photos.",
+			"default": 300,
+			"minimum": 60,
+			"maximum": 600,
+			"prefill": 300
+		}
+	},
+	"required": ["searches"]
+}
