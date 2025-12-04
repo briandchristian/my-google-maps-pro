@@ -21,9 +21,14 @@ await Actor.init();
 
 let input = await Actor.getInput();
 
+console.log('🔍 Input received:', JSON.stringify(input, null, 2));
+
 // Provide demo defaults if no input provided (useful for console testing)
 if (!input || !input.searches || input.searches.length === 0) {
-	console.log('No input provided. Using demo configuration...');
+	console.log('⚠️  No input provided. Using demo configuration...');
+	console.log('⚠️  WARNING: Google Maps scraping requires Apify proxies (paid plan)');
+	console.log('⚠️  Free tier may experience timeouts or blocks from Google');
+	
 	input = {
 		searches: [
 			{
@@ -37,14 +42,27 @@ if (!input || !input.searches || input.searches.length === 0) {
 		downloadPhotos: false,
 		extractContactInfo: false,
 		proxyConfiguration: {
-			useApifyProxy: false, // Free tier compatible
+			useApifyProxy: true, // Required for Google Maps
+			apifyProxyGroups: ['RESIDENTIAL'], // Residential proxies recommended
 		},
 		maxConcurrency: 1, // Safe for 1GB memory
 		navigationTimeoutSecs: 120,
 		requestHandlerTimeoutSecs: 300,
 	};
-	console.log('Demo: Searching for coffee shops in San Francisco (5 places)');
+	console.log('✅ Demo: Searching for coffee shops in San Francisco (5 places)');
 }
+
+// Validate proxy configuration
+if (!input.proxyConfiguration?.useApifyProxy) {
+	console.log('⚠️  WARNING: No proxy configured!');
+	console.log('⚠️  Google Maps blocks datacenter IPs. You may experience:');
+	console.log('   - net::ERR_TIMED_OUT errors');
+	console.log('   - CAPTCHA challenges');
+	console.log('   - Zero results');
+	console.log('💡 Recommendation: Enable Apify residential proxies in input configuration');
+}
+
+console.log(`📊 Configuration: ${input.searches.length} searches, max ${input.maxPlaces} places each, concurrency: ${input.maxConcurrency || 1}`);
 
 // Create proxy configuration
 const proxyConfiguration = await createProxyConfiguration(

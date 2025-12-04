@@ -8,6 +8,25 @@ Advanced Google Maps scraper built with Playwright and Apify SDK. This Actor scr
 - ✅ **Photo Downloads** - Downloads and stores place photos
 - ✅ **Contact Extraction** - Extracts emails and social media links from business websites
 
+## ⚠️ Important Requirements
+
+### Apify Proxies Required
+**Google Maps blocks datacenter IPs.** This actor requires **Apify residential proxies** to function properly:
+
+- ❌ **Will NOT work** on free tier without proxies (timeouts, blocks)
+- ✅ **Requires** paid Apify plan with residential proxy access
+- 💰 **Cost**: ~$0.50-$1 per 1,000 places scraped (proxy usage)
+
+**Without proxies you will see:**
+- `net::ERR_TIMED_OUT` errors
+- CAPTCHA challenges
+- Zero results
+
+### Memory Requirements
+- **Minimum**: 2GB RAM (4GB recommended)
+- **Free tier (1GB)**: Will experience memory overload and timeouts
+- **Concurrency**: 1-2 for 2GB, 3-5 for 4GB+
+
 ## Features
 
 ### Proxy Rotation
