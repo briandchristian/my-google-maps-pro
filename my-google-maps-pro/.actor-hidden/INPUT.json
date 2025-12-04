@@ -1,0 +1,28 @@
+{
+	"searches": [
+		{
+			"query": "coffee shops",
+			"location": "San Francisco, CA"
+		},
+		{
+			"query": "Italian restaurants",
+			"location": "New York, NY"
+		}
+	],
+	"maxPlaces": 20,
+	"includeReviews": true,
+	"maxReviews": 10,
+	"downloadPhotos": false,
+	"extractContactInfo": false,
+	"proxyConfiguration": {
+		"useApifyProxy": true,
+		"apifyProxyGroups": ["RESIDENTIAL"]
+	},
+	"captchaConfiguration": {
+		"maxRetries": 3
+	},
+	"maxConcurrency": 5,
+	"navigationTimeoutSecs": 120,
+	"requestHandlerTimeoutSecs": 300
+}
+

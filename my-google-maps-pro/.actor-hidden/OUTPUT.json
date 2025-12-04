@@ -1,0 +1,36 @@
+{
+	"title": "Blue Bottle Coffee",
+	"address": "66 Mint St, San Francisco, CA 94103",
+	"phone": "+1 510-653-3394",
+	"website": "https://bluebottlecoffee.com",
+	"rating": "4.3",
+	"gps": {
+		"lat": 37.7825,
+		"lng": -122.4088
+	},
+	"url": "https://www.google.com/maps/place/Blue+Bottle+Coffee/@37.7825,-122.4088",
+	"scrapedAt": "2024-12-04T22:30:00.000Z",
+	"reviews": [
+		{
+			"author": "John Smith",
+			"rating": 5,
+			"text": "Great coffee and excellent service! The baristas really know their craft.",
+			"date": "2 weeks ago",
+			"response": {
+				"owner": "Blue Bottle Coffee",
+				"text": "Thank you for the kind words! We appreciate your support.",
+				"date": "1 week ago"
+			}
+		},
+		{
+			"author": "Sarah Johnson",
+			"rating": 4,
+			"text": "Good coffee but can get crowded during morning rush.",
+			"date": "1 month ago",
+			"response": null
+		}
+	],
+	"photos": [],
+	"contactInfo": null
+}
+
