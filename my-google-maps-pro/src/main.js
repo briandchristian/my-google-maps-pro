@@ -187,148 +187,148 @@ const crawler = new PlaywrightCrawler({
 			}
 			await page.waitForTimeout(2000);
 
-	// Extract basic place data using updated selectors
-	const basicData = await page.evaluate(() => {
-		const gpsMatch = window.location.href.match(/!8m2!3d([-\d.]+)!4d([-\d.]+)/);
-		
-		// Helper function to get text content safely
-		const getText = (selectors) => {
-			for (const selector of selectors) {
-				const element = document.querySelector(selector);
-				if (element?.textContent?.trim()) {
-					return element.textContent.trim();
+			// Extract basic place data using updated selectors
+			const basicData = await page.evaluate(() => {
+				const gpsMatch = window.location.href.match(/!8m2!3d([-\d.]+)!4d([-\d.]+)/);
+				
+				// Helper function to get text content safely
+				const getText = (selectors) => {
+					for (const selector of selectors) {
+						const element = document.querySelector(selector);
+						if (element?.textContent?.trim()) {
+							return element.textContent.trim();
+						}
+					}
+					return null;
+				};
+
+				// Helper to get attribute safely
+				const getAttr = (selectors, attr) => {
+					for (const selector of selectors) {
+						const element = document.querySelector(selector);
+						const value = element?.getAttribute(attr);
+						if (value) return value;
+					}
+					return null;
+				};
+
+				// Extract title - try multiple selectors
+				const title = getText([
+					'h1.DUwDvf.lfPIob', // Current main selector
+					'h1[class*="fontHeadlineLarge"]',
+					'h1',
+					'div[role="main"] h1',
+					'[data-section-id="oh"] h2' // Fallback
+				]);
+
+				// Extract address - try multiple approaches
+				const address = getText([
+					'button[data-item-id="address"] div.fontBodyMedium',
+					'button[data-item-id="address"] div',
+					'[data-tooltip="Copy address"]',
+					'button[aria-label*="Address"] div',
+					'div.rogA2c div.Io6YTe' // Old selector as fallback
+				]);
+
+				// Extract phone - try multiple approaches
+				const phone = getText([
+					'button[data-item-id*="phone"] div.fontBodyMedium',
+					'button[data-item-id*="phone"] div',
+					'button[aria-label*="Phone"] div',
+					'a[href^="tel:"]',
+					'button[data-tooltip="Copy phone number"]'
+				]);
+
+				// Extract website
+				const website = getAttr([
+					'a[data-item-id="authority"]',
+					'a[aria-label*="Website"]',
+					'a[data-tooltip*="website"]',
+					'button[data-item-id*="authority"] + a'
+				], 'href');
+
+				// Extract rating - try multiple approaches
+				let rating = null;
+				const ratingElement = document.querySelector('div.F7nice span[role="img"]') || 
+									  document.querySelector('span[role="img"][aria-label*="star"]') ||
+									  document.querySelector('div.fontDisplayLarge');
+				
+				if (ratingElement) {
+					const ariaLabel = ratingElement.getAttribute('aria-label');
+					const textContent = ratingElement.textContent;
+					const match = (ariaLabel || textContent || '').match(/(\d+\.?\d*)/);
+					rating = match ? match[1] : null;
+				}
+
+				// Get review count
+				const reviewCount = getText([
+					'div.F7nice span[aria-label*="reviews"]',
+					'button[aria-label*="reviews"] span',
+					'span[aria-label*="reviews"]'
+				]);
+
+				return {
+					title,
+					address,
+					phone,
+					website,
+					rating,
+					reviewCount,
+					gps: gpsMatch
+						? { lat: parseFloat(gpsMatch[1]), lng: parseFloat(gpsMatch[2]) }
+						: null,
+				};
+			});
+
+			const placeData = {
+				...basicData,
+				url: request.loadedUrl,
+				scrapedAt: new Date().toISOString(),
+			};
+
+			// Log what we extracted
+			console.log(`✅ Extracted: ${basicData.title || 'Unknown'} - ${basicData.address || 'No address'} - Rating: ${basicData.rating || 'N/A'}`);
+
+			// Extract reviews if enabled
+			if (input.includeReviews) {
+				try {
+					const reviews = await scrollAndExtractReviews(page, {
+						maxReviews: input.maxReviews || 50,
+					});
+					placeData.reviews = reviews;
+				} catch (error) {
+					console.error('Error extracting reviews:', error);
+					placeData.reviews = [];
 				}
 			}
-			return null;
-		};
 
-		// Helper to get attribute safely
-		const getAttr = (selectors, attr) => {
-			for (const selector of selectors) {
-				const element = document.querySelector(selector);
-				const value = element?.getAttribute(attr);
-				if (value) return value;
+			// Download photos if enabled
+			if (input.downloadPhotos) {
+				try {
+					const photoUrls = await extractPhotoUrls(page);
+					const placeId = request.loadedUrl.match(/place\/([^/]+)/)?.[1] || 'unknown';
+					const downloadedPhotos = await downloadPhotos(photoUrls, placeId);
+					placeData.photos = downloadedPhotos;
+				} catch (error) {
+					console.error('Error downloading photos:', error);
+					placeData.photos = [];
+				}
 			}
-			return null;
-		};
 
-		// Extract title - try multiple selectors
-		const title = getText([
-			'h1.DUwDvf.lfPIob', // Current main selector
-			'h1[class*="fontHeadlineLarge"]',
-			'h1',
-			'div[role="main"] h1',
-			'[data-section-id="oh"] h2' // Fallback
-		]);
-
-		// Extract address - try multiple approaches
-		const address = getText([
-			'button[data-item-id="address"] div.fontBodyMedium',
-			'button[data-item-id="address"] div',
-			'[data-tooltip="Copy address"]',
-			'button[aria-label*="Address"] div',
-			'div.rogA2c div.Io6YTe' // Old selector as fallback
-		]);
-
-		// Extract phone - try multiple approaches
-		const phone = getText([
-			'button[data-item-id*="phone"] div.fontBodyMedium',
-			'button[data-item-id*="phone"] div',
-			'button[aria-label*="Phone"] div',
-			'a[href^="tel:"]',
-			'button[data-tooltip="Copy phone number"]'
-		]);
-
-		// Extract website
-		const website = getAttr([
-			'a[data-item-id="authority"]',
-			'a[aria-label*="Website"]',
-			'a[data-tooltip*="website"]',
-			'button[data-item-id*="authority"] + a'
-		], 'href');
-
-		// Extract rating - try multiple approaches
-		let rating = null;
-		const ratingElement = document.querySelector('div.F7nice span[role="img"]') || 
-							  document.querySelector('span[role="img"][aria-label*="star"]') ||
-							  document.querySelector('div.fontDisplayLarge');
-		
-		if (ratingElement) {
-			const ariaLabel = ratingElement.getAttribute('aria-label');
-			const textContent = ratingElement.textContent;
-			const match = (ariaLabel || textContent || '').match(/(\d+\.?\d*)/);
-			rating = match ? match[1] : null;
-		}
-
-		// Get review count
-		const reviewCount = getText([
-			'div.F7nice span[aria-label*="reviews"]',
-			'button[aria-label*="reviews"] span',
-			'span[aria-label*="reviews"]'
-		]);
-
-		return {
-			title,
-			address,
-			phone,
-			website,
-			rating,
-			reviewCount,
-			gps: gpsMatch
-				? { lat: parseFloat(gpsMatch[1]), lng: parseFloat(gpsMatch[2]) }
-				: null,
-		};
-	});
-
-	const placeData = {
-		...basicData,
-		url: request.loadedUrl,
-		scrapedAt: new Date().toISOString(),
-	};
-
-	// Log what we extracted
-	console.log(`✅ Extracted: ${basicData.title || 'Unknown'} - ${basicData.address || 'No address'} - Rating: ${basicData.rating || 'N/A'}`);
-
-	// Extract reviews if enabled
-	if (input.includeReviews) {
-		try {
-			const reviews = await scrollAndExtractReviews(page, {
-				maxReviews: input.maxReviews || 50,
-			});
-			placeData.reviews = reviews;
-		} catch (error) {
-			console.error('Error extracting reviews:', error);
-			placeData.reviews = [];
-		}
-	}
-
-	// Download photos if enabled
-	if (input.downloadPhotos) {
-		try {
-			const photoUrls = await extractPhotoUrls(page);
-			const placeId = request.loadedUrl.match(/place\/([^/]+)/)?.[1] || 'unknown';
-			const downloadedPhotos = await downloadPhotos(photoUrls, placeId);
-			placeData.photos = downloadedPhotos;
-		} catch (error) {
-			console.error('Error downloading photos:', error);
-			placeData.photos = [];
-		}
-	}
-
-	// Extract contact info from website if enabled
-	if (input.extractContactInfo && placeData.website) {
-		try {
-			// Navigate to website in new context to extract contact info
-			const websitePage = await page.context().newPage();
-			await websitePage.goto(placeData.website, { timeout: 10000 });
-			const contactInfo = await extractContactInfo(websitePage);
-			placeData.contactInfo = contactInfo;
-			await websitePage.close();
-		} catch (error) {
-			console.error('Error extracting contact info:', error);
-			placeData.contactInfo = null;
-		}
-	}
+			// Extract contact info from website if enabled
+			if (input.extractContactInfo && placeData.website) {
+				try {
+					// Navigate to website in new context to extract contact info
+					const websitePage = await page.context().newPage();
+					await websitePage.goto(placeData.website, { timeout: 10000 });
+					const contactInfo = await extractContactInfo(websitePage);
+					placeData.contactInfo = contactInfo;
+					await websitePage.close();
+				} catch (error) {
+					console.error('Error extracting contact info:', error);
+					placeData.contactInfo = null;
+				}
+			}
 
 			await Dataset.pushData(placeData);
 		}
